@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>익명 채팅</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #0d1117;
+            color: #c9d1d9;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: #161b22;
+            border-radius: 6px;
+            width: 100%;
+            max-width: 800px;
+            padding: 30px;
+            border: 1px solid #30363d;
+        }
+
+        h1 {
+            color: #e6edf3;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+
+        .subtitle {
+            color: #8b949e;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+
+        .context-box {
+            background: #0f141a;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            padding: 14px;
+            margin-bottom: 20px;
+        }
+
+        .context-row {
+            display: flex;
+            gap: 10px;
+            align-items: baseline;
+            margin-bottom: 8px;
+            flex-wrap: wrap;
+        }
+
+        .context-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .ctx-label {
+            color: #8b949e;
+            min-width: 88px;
+        }
+
+        .ctx-value {
+            color: #c9d1d9;
+            word-break: break-all;
+        }
+
+        .ctx-value-accent {
+            color: #e6edf3;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 6px;
+            border: 1px solid #3b82f6;
+            background: rgba(59, 130, 246, 0.08);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #c9d1d9;
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        input[type="text"],
+        textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            font-size: 14px;
+            font-family: inherit;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            background: #0d1117;
+            color: #c9d1d9;
+        }
+
+        a {
+            color: white;
+        }
+
+        input[type="text"]:focus,
+        textarea:focus {
+            outline: none;
+            border-color: #3b82f6;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 120px;
+        }
+
+        .message-container {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .message-input-wrapper,
+        .preview-wrapper {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .message-input-wrapper textarea {
+            flex: 1;
+            min-height: 200px;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        button {
+            flex: 1;
+            padding: 12px 24px;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.1s, border-color 0.2s;
+        }
+
+        .btn-primary {
+            background: #2563eb;
+            color: #fff;
+            border-color: #1d4ed8;
+        }
+
+        .btn-primary:hover {
+            background: #1d4ed8;
+            transform: translateY(-1px);
+            border-color: #1e40af;
+        }
+
+        .btn-primary:disabled {
+            background: #374151;
+            border-color: #30363d;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            background: #21262d;
+            color: #c9d1d9;
+        }
+
+        .btn-secondary:hover {
+            background: #30363d;
+        }
+
+        .message {
+            margin-top: 20px;
+            padding: 12px;
+            border-radius: 6px;
+            display: none;
+            border: 1px solid transparent;
+        }
+
+        .message.success {
+            background: #132e1f;
+            color: #7ee787;
+            border-color: #2ea043;
+        }
+
+        .message.error {
+            background: #3a1f22;
+            color: #ff7b72;
+            border-color: #f85149;
+        }
+
+        .info-box {
+            background: #0f141a;
+            border: 1px solid #30363d;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+        }
+
+        .info-box h3 {
+            margin-bottom: 10px;
+            color: #c9d1d9;
+            font-size: 16px;
+        }
+
+        .info-box p {
+            color: #8b949e;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        .info-box code {
+            background: #0d1117;
+            padding: 2px 6px;
+            border-radius: 4px;
+            border: 1px solid #30363d;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            color: #c9d1d9;
+        }
+
+        .preview-box {
+            background: #0f141a;
+            border: 1px solid #30363d;
+            padding: 14px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+        }
+
+        .preview-title {
+            color: #8b949e;
+            font-size: 13px;
+            margin-bottom: 8px;
+        }
+
+        .preview-content {
+            color: #c9d1d9;
+        }
+
+        .preview-content pre,
+        .preview-content code {
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 4px;
+            padding: 2px 6px;
+        }
+
+        .curl-example {
+            background: #0f141a;
+            padding: 15px;
+            border-radius: 6px;
+            margin-top: 10px;
+            overflow-x: auto;
+            border: 1px solid #30363d;
+        }
+
+        .curl-example-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .curl-example code {
+            display: block;
+            white-space: pre;
+            font-size: 12px;
+        }
+
+        .btn-copy {
+            padding: 4px 8px;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 500;
+            cursor: pointer;
+            background: #21262d;
+            color: #c9d1d9;
+            transition: background 0.2s;
+            white-space: nowrap;
+            flex-shrink: 0;
+            flex-grow: 0;
+            width: auto;
+            min-width: auto;
+        }
+
+        .btn-copy:hover {
+            background: #30363d;
+        }
+
+        .btn-copy:active {
+            background: #1a1d23;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            color: #8b949e;
+            margin-top: 10px;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+            }
+
+            h1 {
+                font-size: 24px;
+            }
+
+            .button-group {
+                flex-direction: column;
+            }
+
+            .message-container {
+                flex-direction: column;
+            }
+
+            .message-input-wrapper textarea {
+                min-height: 150px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>익명 채팅</h1>
+        <p class="subtitle">Discord 웹훅을 통한 익명 메시지 전송</p>
+
+        <div class="context-box" id="context-box">
+            <div class="context-row">
+                <span class="ctx-label">대상 채널</span>
+                <span class="ctx-value ctx-value-accent" id="title-display"></span>
+            </div>
+            <div class="context-row">
+                <span class="ctx-label">웹훅 URL</span>
+                <span class="ctx-value" id="webhook-display"></span>
+            </div>
+        </div>
+
+        <div class="info-box">
+            <h3>사용 안내</h3>
+            <p>
+                이 서비스는 <a style='color: white' href="https://github.com/kctf-org/anonymous-chat" target="_blank">GitHub
+                    Pages</a>로 배포되어 IP 수집 절대 X (대회 담당자가 연락해도 못찾음)<br>
+                닉네임과 메시지를 입력하여 웹훅을 통한 메시지 전송 (대상채널과 웹훅 확인)<br>
+                마크다운 적용되며, 이미지는 ![이미지](이미지URL) 형식으로 imgur 같은데에 올려서 링크를 업로드<br>
+                (미리보기에서는 안뜨는데 디스코드에서는 표시됨)<br>
+                curl을 사용하여 직접 메시지 전송 가능.
+            </p>
+            <div class="curl-example">
+                <div class="curl-example-header">
+                    <strong>curl:</strong>
+                    <button type="button" class="btn-copy" id="copy-curl-btn">복사</button>
+                </div>
+                <code id="curl-example"></code>
+            </div>
+        </div>
+
+        <form id="chat-form">
+            <div class="form-group">
+                <label for="nickname">닉네임 *</label>
+                <input type="text" id="nickname" name="nickname" required maxlength="50" value="수상한사람">
+            </div>
+
+            <div class="form-group">
+                <label for="message">메시지 *</label>
+                <div class="message-container">
+                    <div class="message-input-wrapper">
+                        <textarea id="message" name="message" required maxlength="2000" value=""></textarea>
+                    </div>
+                    <div class="preview-wrapper">
+                        <div class="preview-box">
+                            <div class="preview-title">미리보기</div>
+                            <div id="preview" class="preview-content"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="button-group">
+                <button type="submit" class="btn-primary" id="submit-btn">전송</button>
+                <button type="button" class="btn-secondary" id="clear-btn">초기화</button>
+            </div>
+        </form>
+
+        <div id="message-box" class="message"></div>
+        <div class="loading" id="loading">전송 중...</div>
+    </div>
+
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const webhookUrl = urlParams.get('webhook');
+        const title = urlParams.get('title') || '익명 채팅';
+
+        document.title = title;
+
+        const titleDisplay = document.getElementById('title-display');
+        const webhookDisplay = document.getElementById('webhook-display');
+        if (titleDisplay) {
+            titleDisplay.textContent = title || '제목 미설정';
+        }
+        if (webhookDisplay) {
+            webhookDisplay.textContent = webhookUrl || '웹훅 URL 미설정';
+        }
+
+        function sanitizeForCurl(str) {
+            return str
+                .replace(/\\/g, '\\\\').replace(/'/g, "'\\''").replace(/\n/g, '\\n').replace(/\r/g, '').replace(/"/g, '\\"');
+        }
+
+        function sanitizeForJson(str) {
+            return str
+                .replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/\n/g, '\\n').replace(/\r/g, '').replace(/\t/g, '\\t');
+        }
+
+        function updateCurlExample() {
+            const nickname = document.getElementById('nickname').value || '';
+            const message = document.getElementById('message').value || '';
+            const curlExample = document.getElementById('curl-example');
+
+            if (webhookUrl) {
+                const sanitizedNickname = sanitizeForJson(nickname);
+                const sanitizedMessage = sanitizeForJson(message);
+                curlExample.textContent = `curl -X POST ${webhookUrl} \\\n  -H "Content-Type: application/json" \\\n  -d '{"username": "${sanitizedNickname}", "content": "${sanitizedMessage}"}'`;
+            } else {
+                curlExample.textContent = '웹훅 URL이 필요합니다.';
+            }
+        }
+
+        function copyCurlExample() {
+            const curlExample = document.getElementById('curl-example');
+            if (!curlExample || !curlExample.textContent) {
+                showMessage('복사할 내용이 없습니다.', 'error');
+                return;
+            }
+
+            const text = curlExample.textContent;
+            navigator.clipboard.writeText(text).then(() => {
+                const btn = document.getElementById('copy-curl-btn');
+                const originalText = btn.textContent;
+                btn.textContent = '복사됨!';
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                }, 2000);
+            }).catch(err => {
+                const textArea = document.createElement('textarea');
+                textArea.value = text;
+                textArea.style.position = 'fixed';
+                textArea.style.opacity = '0';
+                document.body.appendChild(textArea);
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    const btn = document.getElementById('copy-curl-btn');
+                    const originalText = btn.textContent;
+                    btn.textContent = '복사됨!';
+                    setTimeout(() => {
+                        btn.textContent = originalText;
+                    }, 2000);
+                } catch (e) {
+                    showMessage('복사에 실패했습니다.', 'error');
+                }
+                document.body.removeChild(textArea);
+            });
+        }
+
+        document.getElementById('nickname').addEventListener('input', updateCurlExample);
+        document.getElementById('message').addEventListener('input', updateCurlExample);
+        document.getElementById('copy-curl-btn').addEventListener('click', copyCurlExample);
+
+        document.getElementById('chat-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            if (!webhookUrl) {
+                showMessage('웹훅 URL이 제공되지 않았습니다.', 'error');
+                return;
+            }
+
+            const nickname = document.getElementById('nickname').value.trim();
+            const message = document.getElementById('message').value.trim();
+
+            if (!nickname || !message) {
+                showMessage('닉네임과 메시지를 모두 입력해주세요.', 'error');
+                return;
+            }
+
+            const submitBtn = document.getElementById('submit-btn');
+            const loading = document.getElementById('loading');
+
+            submitBtn.disabled = true;
+            loading.style.display = 'block';
+            hideMessage();
+
+            try {
+                const response = await fetch(webhookUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        username: nickname,
+                        content: message
+                    })
+                });
+
+                if (response.ok) {
+                    showMessage('메시지가 성공적으로 전송되었습니다!', 'success');
+                    document.getElementById('chat-form').reset();
+                    updateCurlExample();
+                } else {
+                    const errorText = await response.text();
+                    showMessage(`전송 실패: ${response.status} ${errorText}`, 'error');
+                }
+            } catch (error) {
+                showMessage(`전송 중 오류가 발생했습니다: ${error.message}`, 'error');
+            } finally {
+                submitBtn.disabled = false;
+                loading.style.display = 'none';
+            }
+        });
+
+        document.getElementById('clear-btn').addEventListener('click', () => {
+            document.getElementById('chat-form').reset();
+            hideMessage();
+            updateCurlExample();
+        });
+
+        function showMessage(text, type) {
+            const messageBox = document.getElementById('message-box');
+            messageBox.textContent = text;
+            messageBox.className = `message ${type}`;
+            messageBox.style.display = 'block';
+        }
+
+        function hideMessage() {
+            document.getElementById('message-box').style.display = 'none';
+        }
+
+        updateCurlExample();
+
+        if (!webhookUrl) {
+            showMessage('웹훅 URL이 제공되지 않았습니다. URL 파라미터에 webhook을 포함해주세요.', 'error');
+        }
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/lib/marked.umd.js"></script>
+    <script>
+        if (window.marked && marked.setOptions) {
+            marked.setOptions({
+                breaks: true,
+                gfm: true,
+                headerIds: false,
+                mangle: false
+            });
+        }
+
+        const messageEl = document.getElementById('message');
+        const previewEl = document.getElementById('preview');
+
+        function renderPreview() {
+            if (!previewEl) return;
+            const src = (messageEl && messageEl.value) ? messageEl.value : '';
+            try {
+                previewEl.innerHTML = (window.marked && marked.parse) ? marked.parse(src) : src;
+            } catch (e) {
+                previewEl.textContent = src;
+            }
+        }
+
+        if (messageEl) {
+            messageEl.addEventListener('input', renderPreview);
+        }
+        renderPreview();
+    </script>
+</body>
+
+</html>
