@@ -378,7 +378,7 @@
         <form id="chat-form">
             <div class="form-group">
                 <label for="nickname">닉네임 *</label>
-                <input type="text" id="nickname" name="nickname" required maxlength="50" value="수상한사람">
+                <input type="text" id="nickname" name="nickname" required maxlength="50">
             </div>
 
             <div class="form-group">
@@ -420,6 +420,16 @@
         }
         if (webhookDisplay) {
             webhookDisplay.textContent = webhookUrl || '웹훅 URL 미설정';
+        }
+
+        // localStorage에서 닉네임 가져오기
+        const nicknameInput = document.getElementById('nickname');
+        const savedNickname = localStorage.getItem('nickname');
+        if (savedNickname) {
+            nicknameInput.value = savedNickname;
+        } else {
+            nicknameInput.value = '수상한사람';
+            localStorage.setItem('nickname', '수상한사람');
         }
 
         function sanitizeForCurl(str) {
@@ -523,8 +533,12 @@
                 });
 
                 if (response.ok) {
+                    // localStorage에 닉네임 저장
+                    localStorage.setItem('nickname', nickname);
                     showMessage('메시지가 성공적으로 전송되었습니다!', 'success');
-                    document.getElementById('chat-form').reset();
+                    // 메시지만 초기화, 닉네임은 유지
+                    document.getElementById('message').value = '';
+                    document.getElementById('nickname').value = nickname;
                     updateCurlExample();
                 } else {
                     const errorText = await response.text();
@@ -539,9 +553,17 @@
         });
 
         document.getElementById('clear-btn').addEventListener('click', () => {
-            document.getElementById('chat-form').reset();
+            // 메시지만 초기화, 닉네임은 유지
+            document.getElementById('message').value = '';
+            const savedNickname = localStorage.getItem('nickname');
+            if (savedNickname) {
+                document.getElementById('nickname').value = savedNickname;
+            } else {
+                document.getElementById('nickname').value = '';
+            }
             hideMessage();
             updateCurlExample();
+            renderPreview();
         });
 
         function showMessage(text, type) {
