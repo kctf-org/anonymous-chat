@@ -244,6 +244,38 @@
             margin-bottom: 20px;
         }
 
+        .avatar-preview-box {
+            background: #0f141a;
+            border: 1px solid #30363d;
+            padding: 14px;
+            border-radius: 6px;
+            margin-top: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100px;
+        }
+
+        .avatar-preview-title {
+            color: #8b949e;
+            font-size: 12px;
+            margin-bottom: 8px;
+        }
+
+        .avatar-preview-image {
+            max-width: 64px;
+            max-height: 64px;
+            border-radius: 50%;
+            border: 1px solid #30363d;
+        }
+
+        .avatar-preview-placeholder {
+            color: #8b949e;
+            font-size: 12px;
+            padding: 20px;
+            text-align: center;
+        }
+
         .preview-title {
             color: #8b949e;
             font-size: 13px;
@@ -382,6 +414,17 @@
             </div>
 
             <div class="form-group">
+                <label for="avatar_url">아바타 URL (선택)</label>
+                <input type="text" id="avatar_url" name="avatar_url" maxlength="500" placeholder="https://example.com/avatar.png">
+                <div class="avatar-preview-box">
+                    <div class="avatar-preview-title">아바타 미리보기</div>
+                    <div id="avatar-preview-container">
+                        <div class="avatar-preview-placeholder">URL을 입력하면 미리보기가 표시됩니다</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group">
                 <label for="message">메시지 *</label>
                 <div class="message-container">
                     <div class="message-input-wrapper">
@@ -422,14 +465,18 @@
             webhookDisplay.textContent = webhookUrl || '웹훅 URL 미설정';
         }
 
-        // localStorage에서 닉네임 가져오기
         const nicknameInput = document.getElementById('nickname');
+        const avatarUrlInput = document.getElementById('avatar_url');
         const savedNickname = localStorage.getItem('nickname');
+        const savedAvatarUrl = localStorage.getItem('avatar_url');
         if (savedNickname) {
             nicknameInput.value = savedNickname;
         } else {
             nicknameInput.value = '수상한사람';
             localStorage.setItem('nickname', '수상한사람');
+        }
+        if (savedAvatarUrl) {
+            avatarUrlInput.value = savedAvatarUrl;
         }
 
         function sanitizeForCurl(str) {
@@ -445,12 +492,19 @@
         function updateCurlExample() {
             const nickname = document.getElementById('nickname').value || '';
             const message = document.getElementById('message').value || '';
+            const avatarUrl = document.getElementById('avatar_url').value || '';
             const curlExample = document.getElementById('curl-example');
 
             if (webhookUrl) {
                 const sanitizedNickname = sanitizeForJson(nickname);
                 const sanitizedMessage = sanitizeForJson(message);
-                curlExample.textContent = `curl -X POST ${webhookUrl} \\\n  -H "Content-Type: application/json" \\\n  -d '{"username": "${sanitizedNickname}", "content": "${sanitizedMessage}"}'`;
+                const sanitizedAvatarUrl = sanitizeForJson(avatarUrl);
+                let payload = `{"username": "${sanitizedNickname}", "content": "${sanitizedMessage}"`;
+                if (avatarUrl) {
+                    payload += `, "avatar_url": "${sanitizedAvatarUrl}"`;
+                }
+                payload += '}';
+                curlExample.textContent = `curl -X POST ${webhookUrl} \\\n  -H "Content-Type: application/json" \\\n  -d '${payload}'`;
             } else {
                 curlExample.textContent = '웹훅 URL이 필요합니다.';
             }
@@ -493,7 +547,30 @@
             });
         }
 
+        function updateAvatarPreview() {
+            const avatarUrl = document.getElementById('avatar_url').value.trim();
+            const container = document.getElementById('avatar-preview-container');
+            if (!container) return;
+
+            if (avatarUrl) {
+                const img = document.createElement('img');
+                img.src = avatarUrl;
+                img.className = 'avatar-preview-image';
+                img.onerror = function() {
+                    container.innerHTML = '<div class="avatar-preview-placeholder">이미지를 불러올 수 없습니다</div>';
+                };
+                container.innerHTML = '';
+                container.appendChild(img);
+            } else {
+                container.innerHTML = '<div class="avatar-preview-placeholder">URL을 입력하면 미리보기가 표시됩니다</div>';
+            }
+        }
+
         document.getElementById('nickname').addEventListener('input', updateCurlExample);
+        document.getElementById('avatar_url').addEventListener('input', () => {
+            updateCurlExample();
+            updateAvatarPreview();
+        });
         document.getElementById('message').addEventListener('input', updateCurlExample);
         document.getElementById('copy-curl-btn').addEventListener('click', copyCurlExample);
 
@@ -506,6 +583,7 @@
             }
 
             const nickname = document.getElementById('nickname').value.trim();
+            const avatarUrl = document.getElementById('avatar_url').value.trim();
             const message = document.getElementById('message').value.trim();
 
             if (!nickname || !message) {
@@ -521,24 +599,33 @@
             hideMessage();
 
             try {
+                const payload = {
+                    username: nickname,
+                    content: message
+                };
+                if (avatarUrl) {
+                    payload.avatar_url = avatarUrl;
+                }
+
                 const response = await fetch(webhookUrl, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({
-                        username: nickname,
-                        content: message
-                    })
+                    body: JSON.stringify(payload)
                 });
 
                 if (response.ok) {
-                    // localStorage에 닉네임 저장
                     localStorage.setItem('nickname', nickname);
+                    if (avatarUrl) {
+                        localStorage.setItem('avatar_url', avatarUrl);
+                    }
                     showMessage('메시지가 성공적으로 전송되었습니다!', 'success');
-                    // 메시지만 초기화, 닉네임은 유지
                     document.getElementById('message').value = '';
                     document.getElementById('nickname').value = nickname;
+                    if (avatarUrl) {
+                        document.getElementById('avatar_url').value = avatarUrl;
+                    }
                     updateCurlExample();
                 } else {
                     const errorText = await response.text();
@@ -553,16 +640,22 @@
         });
 
         document.getElementById('clear-btn').addEventListener('click', () => {
-            // 메시지만 초기화, 닉네임은 유지
             document.getElementById('message').value = '';
             const savedNickname = localStorage.getItem('nickname');
+            const savedAvatarUrl = localStorage.getItem('avatar_url');
             if (savedNickname) {
                 document.getElementById('nickname').value = savedNickname;
             } else {
                 document.getElementById('nickname').value = '';
             }
+            if (savedAvatarUrl) {
+                document.getElementById('avatar_url').value = savedAvatarUrl;
+            } else {
+                document.getElementById('avatar_url').value = '';
+            }
             hideMessage();
             updateCurlExample();
+            updateAvatarPreview();
             renderPreview();
         });
 
@@ -578,6 +671,7 @@
         }
 
         updateCurlExample();
+        updateAvatarPreview();
 
         if (!webhookUrl) {
             showMessage('웹훅 URL이 제공되지 않았습니다. URL 파라미터에 webhook을 포함해주세요.', 'error');
