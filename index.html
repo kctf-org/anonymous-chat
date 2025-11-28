@@ -472,8 +472,9 @@
         if (savedNickname) {
             nicknameInput.value = savedNickname;
         } else {
-            nicknameInput.value = '수상한사람';
-            localStorage.setItem('nickname', '수상한사람');
+	    const nickName = '수상한사람'+String(Math.floor(Math.random() * 10000)).padStart(4, '0');
+            nicknameInput.value = nickName
+            localStorage.setItem('nickname', nickName);
         }
         if (savedAvatarUrl) {
             avatarUrlInput.value = savedAvatarUrl;
